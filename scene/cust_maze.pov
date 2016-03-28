@@ -53,12 +53,41 @@ light_source { <6.5,12,-0.2> rgb 1 }
 
 plane { y, 0 pigment { rgb <0,0,1> } }
 
-#declare a = object { Maze( 13, 13, 1, 2, no ) pigment { rgb <0,1,0> } }   
-object { a } 
+// file reading, used for animation
+#fopen MyFile "mydata.txt" read
+#read  (MyFile,Object_coordinates)  // the "object" a.k.a maze traverser
+//#read  (MyFile,Object_look) 
+#read  (MyFile, Direction) 
+ 
+ 
+//vrotate( Direction, <90, 0, 0>)
+#declare Object_point_st = vrotate(<1,0,0> , <0, Direction, 0>); // point in front of object
+#declare Object_point_right = vrotate(<1,0,0> , <0, Direction+90, 0>); 
+#declare Object_point_left = vrotate(<1,0,0> , <0, Direction-90, 0>); 
+
+#declare The_maze = object { Maze( 13, 13, 1, 2, no ) pigment { rgb <0,1,0> } }   
+object { The_maze } 
+
+#declare MySphere = sphere { Object_coordinates + Object_point_st, 0.2 }
+
+object { MySphere  pigment {color red 1} } 
+// point on right
+object {
+        sphere { Object_coordinates + Object_point_right, 0.2 pigment {color blue 1} }
+        }
+// point on left
+object { sphere { Object_coordinates + Object_point_left, 0.2 pigment {color rgb<100,10,1>}}}
   
 ///--------      
-#declare MySphere = sphere { <0.5, 0.4, 6.5>, 0.4 pigment { rgb <8,1,0> } }  
-object { MySphere }  
+// #declare MySphere = sphere {MySphere_vector, 0.4 pigment { rgb <8,1,0> } }  
+
+// draving the the maze traverser
+#declare Mover = cone { <-0.3,0,0>, 0.4, <0.3,0,0>, 0 pigment { rgb <8,1,0> } } 
+object { Mover rotate <0,Direction,0>
+               translate Object_coordinates
+      //translate - MySphere_vector rotate 90  translate (MySphere_vector)
+    }  
+
 
 #declare Norm = <0, 0, 0>; 
 #declare Start = <0.5, 0.5, 0.5>;
@@ -71,11 +100,11 @@ cylinder {
     } 
   }      
   
-#declare Inter= trace ( a, Start, End - Start, Norm );    // !!Note!! trace continues until it meets something, not only to END point
+#declare Inter= trace ( The_maze, Start, End - Start, Norm );    // !!Note!! trace continues until it meets something, not only to END point
 
 
 
-// check if there is interconection
+// check if there is interconection, and if yes show 
 #if (vlength(Norm)!=0 & isBetween( Start.x, Start.y, Start.z, End.x, End.y, End.z, Inter.x, Inter.y, Inter.z )) 
 cylinder { 
   Inter, Inter+Norm, .1 
