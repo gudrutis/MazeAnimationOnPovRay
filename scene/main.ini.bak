@@ -1,7 +1,7 @@
 ; POV-Ray animation ini file
 Antialias=Off
-Antialias_Threshold=0.1
-Antialias_Depth=2
+Antialias_Threshold=1.5
+Antialias_Depth=1
 
 Input_File_Name="cust_maze.pov"
 
