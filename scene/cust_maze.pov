@@ -57,6 +57,7 @@ plane { y, 0 pigment {rgb <0,0,1>} }
     #read  (MyFile, Object_coordinates)  // the "object" a.k.a maze traverser 
     #read  (MyFile, Direction) // where object looks 
     #read  (MyFile, Move) // wich part of move between 2 points it is
+    #read  (MyFile, Status) // wich part of move between 2 points it is
 #fclose MyFile  
 
  
@@ -133,29 +134,57 @@ object { Mover rotate <0,Direction,0>
 #if ((obsticle_st=0) & (obsticle_right=0) & (obsticle_left=0)) //(finish)no obsticles around, we finished 
     //!!! theres is posibility for it to fail(when all 4 ways are open inside maze !!!
     // do nothing    
-*/
-#if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
-    #declare Object_coordinates = Point_st  ;
-    #declare Direction =  Direction ;
-    #declare Move = 1 ; // Todo - decide what to do with Move variable
-#elseif( obsticle_right = 0 ) //(right) no obsticles in the right, go right 
-    #declare Object_coordinates = Point_right  ;
-    #declare Direction = Direction + 90 ;
-    #declare Move = 1 ; // Todo - decide what to do with Move variable
-#elseif((obsticle_st=1) & (obsticle_right=1) & (obsticle_left=0)) //(left) 
-    #declare Object_coordinates = Point_left ;
-    #declare Direction = Direction - 90  ;
-    #declare Move = 1 ; // Todo - decide what to do with Move variable
-#else //back 
-    #warning concat("script to go back is firing")
-    #declare Object_coordinates =  Point_back;
-    #declare Direction = Direction - 180 ;
-    #declare Move = 1 ; // Todo - decide what to do with Move variable 
+*/               
+
+#switch (Status)
+  #case (0)
+    #if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
+		#declare Object_coordinates = Point_st ;
+		#declare Direction =  Direction ;
+		#declare Move = 1 ; // Todo - decide what to do with Move variable
+	#elseif( obsticle_right = 0 ) //(right) no obsticles in the right, go right 
+		#declare Object_coordinates = Point_right  ;
+		#declare Direction = Direction + 90 ;
+		#declare Move = 1 ; // Todo - decide what to do with Move variable
+	#elseif((obsticle_st=1) & (obsticle_right=1) & (obsticle_left=0)) //(left) 
+		#declare Object_coordinates = Point_left ;
+		#declare Direction = Direction - 90  ;
+		#declare Move = 1 ; // Todo - decide what to do with Move variable
+	#else //back 
+		#warning concat("script to go back is firing")
+		#declare Object_coordinates =  Point_back ;
+		#declare Direction = Direction - 180 ;
+		#declare Move = 1 ; // Todo - decide what to do with Move variable 
+	#end
+  #break
+  #case (1) // move
+    #if()
+    #else
+    #end
+  #break
+  #case (2) // rotate left
+    #if()
+    #else
+    #end
+  #break
+  #case (3) // rotate right
+    #if()
+    #else
+    #end
+  #break
+  #case (4) // rotate right 180 degrees
+    #if()
+    #else
+    #end  
+  #break    
+  #else
+    #debug "Everything else.\n"
+    #debug "ie. Less than zero or greater than 100.\n"
 #end
 
 //-- place to open file and safe changes
 #fopen MyFile "mydata.txt" write
-    #write( MyFile, Object_coordinates,",", Direction,",",Move,"\n")
+    #write( MyFile, Object_coordinates,",", Direction,",",Move,",",Status,"\n")
 #fclose MyFile 
 
 

@@ -54,16 +54,17 @@ plane { y, 0 pigment {rgb <0,0,1>} }
 
 // file reading, used for animation
 #fopen MyFile "mydata.txt" read
-#read  (MyFile,Object_coordinates)  // the "object" a.k.a maze traverser 
-#read  (MyFile, Direction) // where object looks 
-#read  (MyFile, Move) // wich part of move between 2 points it is
+    #read  (MyFile, Object_coordinates)  // the "object" a.k.a maze traverser 
+    #read  (MyFile, Direction) // where object looks 
+    #read  (MyFile, Move) // wich part of move between 2 points it is
 #fclose MyFile  
 
  
-//vectors for the foloving intersection points
+//vectors for the foloving intersection points and new position calculation
 #declare Object_point_st = vrotate(<1,0,0> , <0, Direction, 0>); // point in front of object
 #declare Object_point_right = vrotate(<1,0,0> , <0, Direction+90, 0>); 
 #declare Object_point_left = vrotate(<1,0,0> , <0, Direction-90, 0>); 
+#declare Object_point_back = vrotate(<1,0,0> , <0, Direction-180, 0>);
 
 // for maze itself
 #include "amaze.inc"
@@ -90,33 +91,73 @@ object { Mover rotate <0,Direction,0>
       //translate - MySphere_vector rotate 90  translate (MySphere_vector)
     }  
 
-////  ////
+////////
 // maze traversing algorithm - check if there is intersection, and if yes, change values acordingly
 
 #declare Norm_st = <0, 0, 0>;
 #declare Norm_right = <0, 0, 0>;
 #declare Norm_left = <0, 0, 0>;
 
-// exhact position of testing points, not relative vectors
+// exhact position of testing points and used for object new position, not relative vectors
 #declare Point_st = Object_coordinates + Object_point_st;
 #declare Point_right = Object_coordinates + Object_point_right;
 #declare Point_left = Object_coordinates + Object_point_left;
+#declare Point_back = Object_coordinates + Object_point_back;
 
+// Coordinates of intersection between obecjt and ray to obsticle in front | right | left, used on later calculations 
 #declare Inter_st= trace ( The_maze, Object_coordinates, Object_point_st , Norm_st );
 #declare Inter_right= trace ( The_maze, Object_coordinates, Object_point_right, Norm_right );
 #declare Inter_left= trace ( The_maze, Object_coordinates, Object_point_left , Norm_left );
 
-// 
-#warning concat("Front is:",str(isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z,
+#declare obsticle_st =          isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z,
                                            Point_st.x, Point_st.y, Point_st.z, 
-                                           Inter_st.x, Inter_st.y, Inter_st.z ), 0, 3) ,"\n")
-
-#warning concat("Right is:",str(isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z, 
+                                           Inter_st.x, Inter_st.y, Inter_st.z );
+#declare obsticle_right =       isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z, 
                                            Point_right.x, Point_right.y, Point_right.z, 
-                                           Inter_right.x, Inter_right.y, Inter_right.z ), 0, 3) ,"\n")
-#warning concat("Left  is:",str(isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z, 
+                                           Inter_right.x, Inter_right.y, Inter_right.z ) ;
+#declare obsticle_left =        isBetween( Object_coordinates.x, Object_coordinates.y, Object_coordinates.z, 
                                            Point_left.x, Point_left.y, Point_left.z, 
-                                           Inter_left.x, Inter_left.y, Inter_left.z ), 0, 3) ,"\n")
+                                           Inter_left.x, Inter_left.y, Inter_left.z ) ;
+
+/////////////////////////
+// Debug
+//////////
+//!! using #warning instead of #debug since #debug mesages were not displayed on console(or I didn't find them)
+#warning concat("Front is:",str(obsticle_st, 0, 3) ,"\n") 
+#warning concat("Right is:",str(obsticle_right, 0, 3) ,"\n")
+#warning concat("Left  is:",str(obsticle_left, 0, 3) ,"\n")
+//----debug finishes
+
+//-- if->else to determine new location, position and transition for the object
+/*
+#if ((obsticle_st=0) & (obsticle_right=0) & (obsticle_left=0)) //(finish)no obsticles around, we finished 
+    //!!! theres is posibility for it to fail(when all 4 ways are open inside maze !!!
+    // do nothing    
+*/
+#if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
+    #declare Object_coordinates = Point_st  ;
+    #declare Direction =  Direction ;
+    #declare Move = 1 ; // Todo - decide what to do with Move variable
+#elseif( obsticle_right = 0 ) //(right) no obsticles in the right, go right 
+    #declare Object_coordinates = Point_right  ;
+    #declare Direction = Direction + 90 ;
+    #declare Move = 1 ; // Todo - decide what to do with Move variable
+#elseif((obsticle_st=1) & (obsticle_right=1) & (obsticle_left=0)) //(left) 
+    #declare Object_coordinates = Point_left ;
+    #declare Direction = Direction - 90  ;
+    #declare Move = 1 ; // Todo - decide what to do with Move variable
+#else //back 
+    #warning concat("script to go back is firing")
+    #declare Object_coordinates =  Point_back;
+    #declare Direction = Direction - 180 ;
+    #declare Move = 1 ; // Todo - decide what to do with Move variable 
+#end
+
+//-- place to open file and safe changes
+#fopen MyFile "mydata.txt" write
+    #write( MyFile, Object_coordinates,",", Direction,",",Move,"\n")
+#fclose MyFile 
+
 
 /*
 #warning concat("intersection in front:",vstr(3,Inter_st, ", ", 0,1),"\n") // zinute  (println) NOTE! debug message cant be found, so using Warning instead!
