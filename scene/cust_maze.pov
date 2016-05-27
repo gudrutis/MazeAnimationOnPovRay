@@ -3,10 +3,17 @@
 #include "stones.inc"
 #include "textures.inc"     
 
+//// use these functions to check if 3 points are in 1 line
+// !!! Doesnt work with not perpendicular interconections!!!            
+#declare distance_is = function(ax, ay,az, bx,by,bz  ) { sqrt(pow(ax - bx,2) + pow(ay - by,2) + pow(az - bz,2)) }
+// check if c point is beetween a and b          
+#declare isBetween = function( ax, ay, az, bx, by, bz, cx, cy, cz ) { distance_is(ax,ay,az,cx,cy,cz) + distance_is(bx,by,bz,cx,cy,cz) = distance_is(ax, ay, az , bx,by,bz ) }
 
-// config
-//#declare rad = 0.3;  
-//#declare k = 8; // high of piramid 
+
+////
+// Constants / Config
+#declare step = 0.5;
+#declare angularStep = 45;
 
 // Camera, and light sources
 /*
@@ -35,14 +42,6 @@ plane {
            }
       }     
 
-//// use these functions to check if 3 points are in 1 line
-// !!! Doesnt work with not perpendicular interconections!!!            
-#declare distance_is = function(ax, ay,az, bx,by,bz  ) { sqrt(pow(ax - bx,2) + pow(ay - by,2) + pow(az - bz,2)) }
-// check if c point is beetween a and b          
-#declare isBetween = function( ax, ay, az, bx, by, bz, cx, cy, cz ) { distance_is(ax,ay,az,cx,cy,cz) + distance_is(bx,by,bz,cx,cy,cz) = distance_is(ax, ay, az , bx,by,bz ) }
-
-
-
 camera {
   location <6.5,11.5,-4>
   look_at  <6.5,0.5,6.5>
@@ -50,14 +49,19 @@ camera {
 
 light_source { <6.5,12,-0.2> rgb 1 }
 
-plane { y, 0 pigment {rgb <0,0,1>} }
+
+
+                  
+
+// plane { y, 0 pigment {rgb <0,0,1>} }
 
 // file reading, used for animation
 #fopen MyFile "mydata.txt" read
     #read  (MyFile, Object_coordinates)  // the "object" a.k.a maze traverser 
     #read  (MyFile, Direction) // where object looks 
     #read  (MyFile, Move) // wich part of move between 2 points it is
-    #read  (MyFile, Status) // wich part of move between 2 points it is
+    #read  (MyFile, Status) // wich part of move between 2 points it is 
+    #read  (MyFile, SpVarFoward) // wich part of move between 2 points it is    
 #fclose MyFile  
 
  
@@ -135,56 +139,96 @@ object { Mover rotate <0,Direction,0>
     //!!! theres is posibility for it to fail(when all 4 ways are open inside maze !!!
     // do nothing    
 */               
-
+#warning concat("Status:", str(Status,3,3) ,"\n")  
 #switch (Status)
   #case (0)
     #if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
-		#declare Object_coordinates = Point_st ;
-		#declare Direction =  Direction ;
-		#declare Move = 1 ; // Todo - decide what to do with Move variable
+		#declare Status = 1 ; // Todo - decide what to do with Move variable 
+		#declare Object_coordinates = Object_coordinates + Object_point_st*step;
+		#declare Move = step;
 	#elseif( obsticle_right = 0 ) //(right) no obsticles in the right, go right 
-		#declare Object_coordinates = Point_right  ;
-		#declare Direction = Direction + 90 ;
-		#declare Move = 1 ; // Todo - decide what to do with Move variable
+        #declare Status = 2 ;
+        #declare SpVarFoward = 1;
+        #declare Direction = Direction + angularStep; 
 	#elseif((obsticle_st=1) & (obsticle_right=1) & (obsticle_left=0)) //(left) 
-		#declare Object_coordinates = Point_left ;
-		#declare Direction = Direction - 90  ;
-		#declare Move = 1 ; // Todo - decide what to do with Move variable
+        #declare Status = 3 ;
+        #declare Direction = Direction - angularStep;
 	#else //back 
 		#warning concat("script to go back is firing")
-		#declare Object_coordinates =  Point_back ;
-		#declare Direction = Direction - 180 ;
-		#declare Move = 1 ; // Todo - decide what to do with Move variable 
+		#declare Status = 4 ; // Todo - decide what to do with Move variable
+		#declare Direction = Direction + angularStep; 
 	#end
   #break
   #case (1) // move
-    #if()
-    #else
+    #if(Move < 1) 
+        #declare Object_coordinates = Object_coordinates + Object_point_st*step;
+        #declare Move = Move + step;
+    #else 
+        #declare Status = 0;
+        #declare Move = 0;
     #end
   #break
-  #case (2) // rotate left
-    #if()
-    #else
+  #case (2) // rotate right + exceptions          
+    #if(mod(Direction,90)!= 0) 
+        #declare Direction = Direction + angularStep; 
+    #else  // after rotating right go foward
+        #if (SpVarFoward = 1 )
+            #declare Status = 1 ;
+            #declare SpVarFoward = 0;
+            #declare Object_coordinates = Object_coordinates + Object_point_st*step;
+            #declare Move = Move + step; 
+        #else
+            #declare Status = 0 ;
+        #end    
     #end
   #break
-  #case (3) // rotate right
-    #if()
+  #case (3) // rotate left
+    #if(mod(Direction,90)!= 0)
+        #declare Direction = Direction - angularStep;
     #else
-    #end
+        #declare Status = 0 ;
+    #end                     
   #break
   #case (4) // rotate right 180 degrees
-    #if()
+    #if(mod(Direction,180)!= 0)
+        #declare Direction = Direction + angularStep;
     #else
+        #declare Status = 0 ;
+        #declare SpVarFoward = 1;
     #end  
   #break    
   #else
-    #debug "Everything else.\n"
-    #debug "ie. Less than zero or greater than 100.\n"
+    #warning concat("Status:",Status ,"\n")  
+    #debug "Pass"
 #end
+
+#if (Status=0) // this if will get rid of extra idle rendered pictures
+    #if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
+		#declare Status = 1 ; // Todo - decide what to do with Move variable 
+		#declare Object_coordinates = Object_coordinates + Object_point_st*step;
+		#declare Move = step;
+	#elseif( obsticle_right = 0 ) //(right) no obsticles in the right, go right 
+        #declare Status = 2 ;
+        #declare SpVarFoward = 1;
+        #declare Direction = Direction + angularStep; 
+	#elseif((obsticle_st=1) & (obsticle_right=1) & (obsticle_left=0)) //(left) 
+        #declare Status = 3 ;
+        #declare Direction = Direction - angularStep;
+	#else //back 
+		#warning concat("script to go back is firing")
+		#declare Status = 4 ; // Todo - decide what to do with Move variable
+		#declare Direction = Direction + angularStep; 
+	#end
+#end
+
+
+
+
+
 
 //-- place to open file and safe changes
 #fopen MyFile "mydata.txt" write
-    #write( MyFile, Object_coordinates,",", Direction,",",Move,",",Status,"\n")
+    #write( MyFile, Object_coordinates,",", Direction,",",Move,",",Status,",",SpVarFoward,"\n")
 #fclose MyFile 
 
 
