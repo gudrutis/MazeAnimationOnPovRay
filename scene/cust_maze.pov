@@ -15,21 +15,20 @@
 #declare step = 0.5;
 #declare angularStep = 45;
 
+
+// file reading, used for animation
+#fopen MyFile "mydata.txt" read
+    #read  (MyFile, Object_coordinates)  // the "object" a.k.a maze traverser 
+    #read  (MyFile, Direction) // where object looks 
+    #read  (MyFile, Move) // wich part of move between 2 points it is
+    #read  (MyFile, Status) // wich part of move between 2 points it is 
+    #read  (MyFile, SpVarFoward) // wich part of move between 2 points it is    
+#fclose MyFile  
+
+
+
 // Camera, and light sources
-/*
-camera {
-	location <0,10,0>
-	look_at <0, 0, 0>
-    }
-light_source { 
-    <-50, 300,-100> 
-    color rgb<1,1,1>
-    }
-light_source { 
-    <-50, 25,-50> 
-    color rgb<1,1,1>
-    }
-*/ 
+
 
 // Scene Objects  
 plane {
@@ -41,28 +40,29 @@ plane {
             scale 1
            }
       }     
-
+/*
 camera {
-  location <6.5,11.5,-4>
-  look_at  <6.5,0.5,6.5>
+  location Object_coordinates +   vrotate(<6.5,10,0> , <0, Direction-180, 0>)
+  look_at  Object_coordinates
 }
+*/
+
+#if (mod(div(frame_number,10),2) = 1) 
+camera {
+  location <6.5,12,6.5>
+  look_at  Object_coordinates
+}
+#else
+camera {
+  location Object_coordinates + vrotate(<4.5,6,0> , <0, Direction-180, 0>)
+  look_at  Object_coordinates
+}
+
+#end
+
 
 light_source { <6.5,12,-0.2> rgb 1 }
 
-
-
-                  
-
-// plane { y, 0 pigment {rgb <0,0,1>} }
-
-// file reading, used for animation
-#fopen MyFile "mydata.txt" read
-    #read  (MyFile, Object_coordinates)  // the "object" a.k.a maze traverser 
-    #read  (MyFile, Direction) // where object looks 
-    #read  (MyFile, Move) // wich part of move between 2 points it is
-    #read  (MyFile, Status) // wich part of move between 2 points it is 
-    #read  (MyFile, SpVarFoward) // wich part of move between 2 points it is    
-#fclose MyFile  
 
  
 //vectors for the foloving intersection points and new position calculation
