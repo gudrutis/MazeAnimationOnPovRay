@@ -68,7 +68,7 @@ plane { y, 0 pigment {rgb <0,0,1>} }
 
 // for maze itself
 #include "amaze.inc"
-#declare The_maze = object { Maze( 5, 16, 1, 2, no ) pigment { rgb <0,1,0> } }   
+#declare The_maze = object { Maze( 13, 13, 1, 2, no ) pigment { rgb <0,1,0> } }   
 object { The_maze } 
 
 
@@ -129,10 +129,12 @@ object { Mover rotate <0,Direction,0>
 //----debug finishes
 
 //-- if->else to determine new location, position and transition for the object
+/*
 #if ((obsticle_st=0) & (obsticle_right=0) & (obsticle_left=0)) //(finish)no obsticles around, we finished 
     //!!! theres is posibility for it to fail(when all 4 ways are open inside maze !!!
     // do nothing    
-#elseif((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
+*/
+#if((obsticle_st=0) & (obsticle_right=1)) //(straig)obsticles in the right but not straigh, go straight 
     #declare Object_coordinates = Point_st  ;
     #declare Direction =  Direction ;
     #declare Move = 1 ; // Todo - decide what to do with Move variable
