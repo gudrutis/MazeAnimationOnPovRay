@@ -14,5 +14,5 @@ Default starting values:
 #declare The_maze = object { Maze( 13, 13, 1, 2, no ) pigment { rgb <0,1,0> } }
 
 mydata.txt 
-<0.5,0.4,6.5> ,0,1 <- default values
-//|<koordinates>| , |angle|, |state| of maze "traverser"
+<0.5,0.4,6.5> ,0,0,0,0 <- default values
+//|<koordinates>| , |angle|, |move|,|state|,|spec_var| of maze "traverser"

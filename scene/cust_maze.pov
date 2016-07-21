@@ -2,6 +2,7 @@
 #include "colors.inc"
 #include "stones.inc"
 #include "textures.inc"     
+#include "amaze.inc"
 
 //// use these functions to check if 3 points are in 1 line
 // !!! Doesnt work with not perpendicular interconections!!!            
@@ -12,8 +13,17 @@
 
 ////
 // Constants / Config
-#declare step = 0.5;
-#declare angularStep = 45;
+#declare step = 0.1;
+#declare angularStep = 10;
+
+
+#declare colormap = color_map {
+ [0.1 color Brown]
+ [0.3 color Yellow]
+ [0.6 color Pink]
+ [0.6 color Blue]
+ [0.8 color Red]
+ };
 
 
 // file reading, used for animation
@@ -26,8 +36,35 @@
 #fclose MyFile  
 
 
+#if (mod(div(frame_number,50),3) = 1) 
+camera {
+  location <6.5,10,-2> 
+  look_at  Object_coordinates
+}
+#elseif (mod(div(frame_number,50),3) = 0) 
+camera {
+  location <6.5,12,-3> 
+  look_at   <6.5,0,5>
+}
+#else
+camera {
+  location Object_coordinates + vrotate(<2.5,6,0> , <0, Direction-180, 0>)
+  look_at  Object_coordinates
+}
+#end
 
-// Camera, and light sources
+/*
+camera {
+  location <6.5,10,10.5> 
+  look_at  <13.5,0,13.5>
+}
+*/
+
+
+light_source { <-6.5,20,-20> rgb 1 }
+light_source { <-6.5,20,-20> rgb 1 }
+light_source { <10,100,10> rgb <0.1,0.1,0.1> }
+global_settings { ambient_light rgb<1, 0, 0> }
 
 
 // Scene Objects  
@@ -35,33 +72,90 @@ plane {
     y, 0 
     texture{
         pigment{
-            checker White, Gray25
+            Jade
                } 
             scale 1
            }
-      }     
+      }  
+
+// sky 
 /*
-camera {
-  location Object_coordinates +   vrotate(<6.5,10,0> , <0, Direction-180, 0>)
-  look_at  Object_coordinates
+sky_sphere
+ {
+	pigment
+	{
+		gradient y
+		color_map
+		{
+			[0.5 color CornflowerBlue]
+			[1.0 color MidnightBlue]
+		}
+		scale 2
+		translate -1
+		}
+			
+			pigment
+		{
+		bozo
+		turbulence 0.7
+		omega 0.7
+		color_map
+		{
+			[0.0 color rgb <0.85, 0.85, 0.85>]
+			[0.1 color rgb <0.75, 0.75, 0.75>]
+			[0.5 color rgbt <1, 1, 1, 1>]
+			[1.0 color rgbt <1, 1, 1, 1>]
+		}
+	scale <0.2, 0.5, 0.2>
+	}
 }
 */
 
-#if (mod(div(frame_number,10),2) = 1) 
-camera {
-  location <6.5,12,6.5>
-  look_at  Object_coordinates
+box {
+<13, 0, 13>, <14, 0.1, 10>
+ pigment { checker rgb 0.75, rgb 0.25 scale 0.2 }
+    }
+   
+
+text {
+ttf "arial.ttf"
+ "MAZE RUNNER"
+ 2,
+ <0, 0, 0>
+ pigment{Yellow}
+ rotate <60,0,0>
+ translate <3.5, 1, 13>
 }
-#else
-camera {
-  location Object_coordinates + vrotate(<4.5,6,0> , <0, Direction-180, 0>)
-  look_at  Object_coordinates
-}
 
-#end
+// for maze itself
+
+#declare The_maze = object { Maze( 13, 13, 1, 2, no ) 
+                    pigment{ color rgb<0.0,1,0.0>}
+normal { agate 1.00 // bump depth
+         scale 0.5 }
+                             }   
+object { The_maze } 
+
+// fog
+ box {
+ <0, -1, 0>, <13, 0.3, 13>
+ pigment { rgbt <1, 1, 1, 1> } 
+        hollow
+    interior {
+    media {
+         scattering{1, <0.5, 0.5, 0.5>}
+         }
+     }
+ }
 
 
-light_source { <6.5,12,-0.2> rgb 1 }
+fog
+ {
+ distance 150
+ color rgbt <0.4, 0.4, 0.4, 0.10>
+ turbulence 0.3
+ turb_depth 0.6
+ }
 
 
  
@@ -71,30 +165,33 @@ light_source { <6.5,12,-0.2> rgb 1 }
 #declare Object_point_left = vrotate(<1,0,0> , <0, Direction-90, 0>); 
 #declare Object_point_back = vrotate(<1,0,0> , <0, Direction-180, 0>);
 
-// for maze itself
-#include "amaze.inc"
-#declare The_maze = object { Maze( 13, 13, 1, 2, no ) pigment { rgb <0,1,0> } }   
-object { The_maze } 
+ 
+//#declare MySphere = sphere { Object_coordinates + Object_point_st, 0.2 }
 
-
-#declare MySphere = sphere { Object_coordinates + Object_point_st, 0.2 }
-
-// point straight in front
-object { MySphere  pigment {color red 1} } 
-// point on right
-object {        sphere { Object_coordinates + Object_point_right, 0.2 pigment {color blue 1}}}
-// point on left
-object { sphere { Object_coordinates + Object_point_left, 0.2 pigment {color rgb<100,10,1>}}}
-  
 ///--------      
-// #declare MySphere = sphere {MySphere_vector, 0.4 pigment { rgb <8,1,0> } }  
 
-// draving the the maze traverser
-#declare Mover = cone { <-0.3,0,0>, 0.4, <0.3,0,0>, 0 pigment { rgb <8,1,0> } } 
+
+// draving the the maze traverser   
+#declare Mover = sphere {<0,0,0>, 0.35 pigment {  bozo
+ frequency 20
+ turbulence 0.8
+ color_map{colormap}} }  
+//#declare Mover = cone { <-0.3,0,0>, 0.4, <0.3,0,0>, 0 texture{Lightning2} }
+ 
 object { Mover rotate <0,Direction,0>
-               translate (Object_coordinates+Object_point_st*0) // vector multplying works
-      //translate - MySphere_vector rotate 90  translate (MySphere_vector)
+               translate Object_coordinates 
     }  
+/*
+light_source{
+   Object_coordinates
+   color rgb <0.8, 0.5, 0.2>
+   area_light       // kind of light source
+   <0,0,0><0,0.25,0>//lights spread area
+   1, 10      // total number of lights x,y
+   adaptive 3 // 0,1,2,3...
+   jitter // adds random softening of light
+} //---------------- end of area_light -----
+*/
 
 ////////
 // maze traversing algorithm - check if there is intersection, and if yes, change values acordingly
